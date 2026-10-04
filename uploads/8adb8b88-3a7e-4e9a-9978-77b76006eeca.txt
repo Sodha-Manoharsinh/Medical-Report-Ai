@@ -1,0 +1,8 @@
+PATIENT: Upload Test User
+AGE: 32 Years
+REPORT DATE: 2026-10-04
+Hemoglobin: 14.5 g/dL (13.0 - 17.0)
+WBC Count: 6500 /cumm
+Blood Glucose (Fasting): 92 mg/dL
+DIAGNOSIS: Normal clinical baseline
+MEDICATION: None

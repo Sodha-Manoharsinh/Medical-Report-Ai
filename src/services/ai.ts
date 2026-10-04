@@ -80,7 +80,7 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs = 15000): Promise<T
 async function callGeminiWithFallback(
   ai: GoogleGenAI,
   request: {
-    contents: string;
+    contents: any;
     config?: any;
     model?: string;
   },
@@ -594,7 +594,11 @@ export function ruleExtract(rawText: string) {
 // Extraction Service (AI preferred with validation & clinical fallback)
 // ──────────────────────────────────────────────────────────────
 
-export async function extractMedicalFacts(rawText: string): Promise<any> {
+export async function extractMedicalFacts(
+  rawText: string,
+  filePath?: string,
+  fileType?: string
+): Promise<any> {
   const fallback = ruleExtract(rawText);
   const ai = getGeminiClient();
 
@@ -631,17 +635,51 @@ Return ONLY valid JSON matching this schema:
   "doctor": {"name": null, "specialization": null, "facility": null}
 }
 
-Document:
-${rawText.slice(0, 9000)}`;
+Document Text:
+${(rawText || '').slice(0, 9000)}`;
+
+      const parts: any[] = [{ text: prompt }];
+
+      if (filePath && typeof filePath === 'string') {
+        try {
+          const ext = (fileType || filePath.split('.').pop() || '').toLowerCase().replace(/^\./, '');
+          const mimeTypes: Record<string, string> = {
+            pdf: 'application/pdf',
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            jpeg: 'image/jpeg',
+            webp: 'image/webp',
+            gif: 'image/gif',
+          };
+          const mime = mimeTypes[ext];
+          if (mime) {
+            const fsModule = await import('fs');
+            if (fsModule.existsSync(filePath)) {
+              const fileBuf = fsModule.readFileSync(filePath);
+              if (fileBuf.length > 0 && fileBuf.length < 20 * 1024 * 1024) {
+                parts.push({
+                  inlineData: {
+                    data: fileBuf.toString('base64'),
+                    mimeType: mime,
+                  },
+                });
+              }
+            }
+          }
+        } catch (fileErr) {
+          console.warn('[AI] Error attaching file buffer to Gemini prompt:', fileErr);
+        }
+      }
 
       const response = await callGeminiWithFallback(
         ai,
         {
-          contents: prompt,
+          contents: parts.length > 1 ? parts : prompt,
           config: { responseMimeType: 'application/json' },
         },
-        15000
+        20000
       );
+
 
       const parsed = JSON.parse(response.text || '{}');
 

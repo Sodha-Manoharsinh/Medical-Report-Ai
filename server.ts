@@ -63,26 +63,30 @@ app.use(
 );
 
 // Auth helper middleware
-function requireAuth(req: any, res: any, next: any) {
+async function requireAuth(req: any, res: any, next: any) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!token) {
     return res.status(401).json({ error: 'Authentication required.' });
   }
-  const sessionData = store.getSession(token);
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Invalid or expired session.' });
+  try {
+    const sessionData = await store.getSession(token);
+    if (!sessionData) {
+      return res.status(401).json({ error: 'Invalid or expired session.' });
+    }
+    req.user = sessionData.user;
+    req.session = sessionData.session;
+    next();
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Authentication verification failed.' });
   }
-  req.user = sessionData.user;
-  req.session = sessionData.session;
-  next();
 }
 
 // ──────────────────────────────────────────────────────────────
 // Auth Routes
 // ──────────────────────────────────────────────────────────────
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const email = (req.body?.email || '').trim().toLowerCase();
   const phone = (req.body?.phone || '').trim();
   const fullName = (req.body?.full_name || req.body?.name || '').trim();
@@ -94,32 +98,36 @@ app.post('/api/auth/login', (req, res) => {
     return res.status(400).json({ error: 'Email and phone number are required.' });
   }
 
-  const user = store.findOrCreateUser(email, phone, {
-    full_name: fullName || undefined,
-    dob: dob || undefined,
-    age: age || undefined,
-    gender: gender || undefined,
-  });
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  store.createOtp(user.id, otp, 10);
+  try {
+    const user = await store.findOrCreateUser(email, phone, {
+      full_name: fullName || undefined,
+      dob: dob || undefined,
+      age: age || undefined,
+      gender: gender || undefined,
+    });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await store.createOtp(user.id, otp, 10);
 
-  return res.json({
-    message: 'OTP generated (dev mode).',
-    dev_otp: otp,
-    user_id: user.id,
-    patient: {
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      phone: user.phone,
-      dob,
-      age,
-      gender,
-    },
-  });
+    return res.json({
+      message: 'OTP generated (dev mode).',
+      dev_otp: otp,
+      user_id: user.id,
+      patient: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone,
+        dob,
+        age,
+        gender,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Login failed' });
+  }
 });
 
-app.post('/api/auth/verify-otp', (req, res) => {
+app.post('/api/auth/verify-otp', async (req, res) => {
   const userId = (req.body?.user_id || '').trim();
   const otp = (req.body?.otp || '').trim();
 
@@ -127,54 +135,62 @@ app.post('/api/auth/verify-otp', (req, res) => {
     return res.status(400).json({ error: 'user_id and otp are required.' });
   }
 
-  const isValid = store.verifyOtp(userId, otp);
-  if (!isValid) {
-    return res.status(401).json({ error: 'Invalid or expired OTP.' });
+  try {
+    const isValid = await store.verifyOtp(userId, otp);
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid or expired OTP.' });
+    }
+
+    const token = await store.createSession(userId);
+    const user = await store.getUserById(userId);
+    const profile = await store.getProfile(userId);
+
+    return res.json({
+      token,
+      user: {
+        id: user?.id,
+        email: user?.email,
+        phone: user?.phone,
+        full_name: profile?.full_name || user?.full_name || null,
+        age: profile?.age || null,
+        date_of_birth: profile?.date_of_birth || null,
+        gender: profile?.gender || null,
+        abha_id: profile?.abha_id || null,
+        blood_group: profile?.blood_group || null,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Verification failed' });
   }
-
-  const token = store.createSession(userId);
-  const user = store.getUserById(userId);
-  const profile = store.getProfile(userId);
-
-  return res.json({
-    token,
-    user: {
-      id: user?.id,
-      email: user?.email,
-      phone: user?.phone,
-      full_name: profile?.full_name || user?.full_name || null,
-      age: profile?.age || null,
-      date_of_birth: profile?.date_of_birth || null,
-      gender: profile?.gender || null,
-      abha_id: profile?.abha_id || null,
-      blood_group: profile?.blood_group || null,
-    },
-  });
 });
 
-app.get('/api/auth/me', requireAuth, (req: any, res: any) => {
-  const profile = store.getProfile(req.user.id);
-  const docs = store.listDocuments(req.user.id);
-  return res.json({
-    user: {
-      id: req.user.id,
-      email: req.user.email,
-      phone: req.user.phone,
-      full_name: profile?.full_name || req.user.full_name || null,
-      age: profile?.age || null,
-      date_of_birth: profile?.date_of_birth || null,
-      gender: profile?.gender || null,
-      abha_id: profile?.abha_id || null,
-      blood_group: profile?.blood_group || null,
-      documents_count: docs.length,
-    },
-  });
+app.get('/api/auth/me', requireAuth, async (req: any, res: any) => {
+  try {
+    const profile = await store.getProfile(req.user.id);
+    const docs = await store.listDocuments(req.user.id);
+    return res.json({
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        phone: req.user.phone,
+        full_name: profile?.full_name || req.user.full_name || null,
+        age: profile?.age || null,
+        date_of_birth: profile?.date_of_birth || null,
+        gender: profile?.gender || null,
+        abha_id: profile?.abha_id || null,
+        blood_group: profile?.blood_group || null,
+        documents_count: docs.length,
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving account profile.' });
+  }
 });
 
-app.post('/api/auth/logout', (req, res) => {
+app.post('/api/auth/logout', async (req, res) => {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim();
   if (token) {
-    store.deleteSession(token);
+    await store.deleteSession(token);
   }
   return res.json({ message: 'Logged out.' });
 });
@@ -183,29 +199,37 @@ app.post('/api/auth/logout', (req, res) => {
 // Documents Routes
 // ──────────────────────────────────────────────────────────────
 
-app.get(['/api/documents', '/api/documents/'], requireAuth, (req: any, res: any) => {
-  const docs = store.listDocuments(req.user.id);
-  return res.json({ documents: docs });
+app.get(['/api/documents', '/api/documents/'], requireAuth, async (req: any, res: any) => {
+  try {
+    const docs = await store.listDocuments(req.user.id);
+    return res.json({ documents: docs });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed fetching documents.' });
+  }
 });
 
-app.get('/api/documents/:id/facts', requireAuth, (req: any, res: any) => {
-  const doc = store.getDocument(req.params.id);
-  if (!doc || doc.user_id !== req.user.id) {
-    return res.status(404).json({ error: 'Document not found.' });
+app.get('/api/documents/:id/facts', requireAuth, async (req: any, res: any) => {
+  try {
+    const doc = await store.getDocument(req.params.id);
+    if (!doc || doc.user_id !== req.user.id) {
+      return res.status(404).json({ error: 'Document not found.' });
+    }
+    const facts = await store.getFactsForDocument(req.params.id);
+    return res.json({ document: doc, facts });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving facts.' });
   }
-  const facts = store.getFactsForDocument(req.params.id);
-  return res.json({ document: doc, facts });
 });
 
 // View original uploaded document file
-app.get(['/api/documents/:id/view', '/api/documents/:id/view/'], (req: any, res: any) => {
+app.get(['/api/documents/:id/view', '/api/documents/:id/view/'], async (req: any, res: any) => {
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '').trim() || ((req.query?.token as string) || '').trim();
-  const sessionData = store.getSession(token);
+  const sessionData = await store.getSession(token);
   if (!sessionData) {
     return res.status(401).send('Unauthorized. Please log in.');
   }
 
-  const doc = store.getDocument(req.params.id);
+  const doc = await store.getDocument(req.params.id);
   if (!doc || doc.user_id !== sessionData.user.id) {
     return res.status(404).send('Document not found or unauthorized.');
   }
@@ -239,7 +263,7 @@ app.get(['/api/documents/:id/view', '/api/documents/:id/view/'], (req: any, res:
 
 // Get document content and metadata for viewer
 app.get(['/api/documents/:id/content', '/api/documents/:id/content/'], requireAuth, async (req: any, res: any) => {
-  const doc = store.getDocument(req.params.id);
+  const doc = await store.getDocument(req.params.id);
   if (!doc || doc.user_id !== req.user.id) {
     return res.status(404).json({ error: 'Document not found.' });
   }
@@ -300,18 +324,18 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
     uploaded_at: new Date().toISOString(),
     extracted_at: null,
   };
-  store.addDocument(docRecord);
+  await store.addDocument(docRecord);
 
   try {
     const rawText = await extractText(file.path, ext);
-    const facts = await extractMedicalFacts(rawText);
+    const facts = await extractMedicalFacts(rawText, file.path, ext);
 
     // Save facts
     const reportDate = facts.report_date || null;
 
     for (const item of facts.lab_results || []) {
       if (item && item.test) {
-        store.addFact({
+        await store.addFact({
           document_id: docId,
           user_id: req.user.id,
           category: 'lab_result',
@@ -329,7 +353,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
 
     for (const item of facts.diagnoses || []) {
       if (item && item.name) {
-        store.addFact({
+        await store.addFact({
           document_id: docId,
           user_id: req.user.id,
           category: 'diagnosis',
@@ -347,7 +371,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
     for (const item of facts.medications || []) {
       if (item && item.name) {
         const val = `${item.dose || ''} ${item.frequency || ''}`.trim() || item.name;
-        store.addFact({
+        await store.addFact({
           document_id: docId,
           user_id: req.user.id,
           category: 'medication',
@@ -364,7 +388,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
 
     for (const item of facts.vital_signs || []) {
       if (item && item.name) {
-        store.addFact({
+        await store.addFact({
           document_id: docId,
           user_id: req.user.id,
           category: 'vital_sign',
@@ -381,7 +405,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
 
     for (const item of facts.allergies || []) {
       if (item && item.substance) {
-        store.addFact({
+        await store.addFact({
           document_id: docId,
           user_id: req.user.id,
           category: 'allergy',
@@ -398,7 +422,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
 
     if (facts.doctor && (facts.doctor.name || facts.doctor.facility || facts.doctor.specialization)) {
       const docStr = [facts.doctor.name, facts.doctor.specialization, facts.doctor.facility].filter(Boolean).join(', ');
-      store.addFact({
+      await store.addFact({
         document_id: docId,
         user_id: req.user.id,
         category: 'doctor',
@@ -413,7 +437,7 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
     }
 
     if (facts.patient && Object.values(facts.patient).some(Boolean)) {
-      store.upsertProfile(req.user.id, facts.patient);
+      await store.upsertProfile(req.user.id, facts.patient);
     }
 
     docRecord.upload_status = 'extracted';
@@ -434,9 +458,9 @@ app.post('/api/documents/upload', requireAuth, upload.single('file') as any, asy
   }
 });
 
-app.delete(['/api/documents/:id', '/api/documents/:id/'], requireAuth, (req: any, res: any) => {
+app.delete(['/api/documents/:id', '/api/documents/:id/'], requireAuth, async (req: any, res: any) => {
   const docId = req.params.id;
-  const doc = store.getDocument(docId);
+  const doc = await store.getDocument(docId);
   if (!doc || doc.user_id !== req.user.id) {
     return res.status(404).json({ error: 'Document not found or unauthorized.' });
   }
@@ -450,7 +474,7 @@ app.delete(['/api/documents/:id', '/api/documents/:id/'], requireAuth, (req: any
     }
   }
 
-  store.deleteDocument(docId, req.user.id);
+  await store.deleteDocument(docId, req.user.id);
   return res.json({ success: true, message: 'Document and related extracted data deleted.', id: docId });
 });
 
@@ -458,31 +482,43 @@ app.delete(['/api/documents/:id', '/api/documents/:id/'], requireAuth, (req: any
 // Summary & Analysis Routes
 // ──────────────────────────────────────────────────────────────
 
-app.get('/api/summary/patient-data', requireAuth, (req: any, res: any) => {
-  const data = store.getPatientData(req.user.id);
-  return res.json(data);
+app.get('/api/summary/patient-data', requireAuth, async (req: any, res: any) => {
+  try {
+    const data = await store.getPatientData(req.user.id);
+    return res.json(data);
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving patient data.' });
+  }
 });
 
-app.get('/api/summary/latest', requireAuth, (req: any, res: any) => {
+app.get('/api/summary/latest', requireAuth, async (req: any, res: any) => {
   const type = req.query.type as string | undefined;
-  const summary = store.getLatestSummary(req.user.id, type);
-  const patientData = store.getPatientData(req.user.id);
-  return res.json({
-    title: summary?.title || 'Medical Summary Report',
-    summary_type: summary?.summary_type || (type || 'comprehensive'),
-    summary: summary?.content || null,
-    generated_at: summary?.generated_at || null,
-    patient_data: patientData,
-  });
+  try {
+    const summary = await store.getLatestSummary(req.user.id, type);
+    const patientData = await store.getPatientData(req.user.id);
+    return res.json({
+      title: summary?.title || 'Medical Summary Report',
+      summary_type: summary?.summary_type || (type || 'comprehensive'),
+      summary: summary?.content || null,
+      generated_at: summary?.generated_at || null,
+      patient_data: patientData,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving latest summary.' });
+  }
 });
 
-app.get('/api/summary/history', requireAuth, (req: any, res: any) => {
-  const summaries = store.listSummaries(req.user.id);
-  return res.json({ summaries });
+app.get('/api/summary/history', requireAuth, async (req: any, res: any) => {
+  try {
+    const summaries = await store.listSummaries(req.user.id);
+    return res.json({ summaries });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving summary history.' });
+  }
 });
 
 app.post('/api/summary/generate', requireAuth, async (req: any, res: any) => {
-  const patientData = store.getPatientData(req.user.id);
+  const patientData = await store.getPatientData(req.user.id);
   if (!patientData.documents || !patientData.documents.length) {
     return res.status(400).json({ error: 'No documents uploaded yet.' });
   }
@@ -492,7 +528,7 @@ app.post('/api/summary/generate', requireAuth, async (req: any, res: any) => {
   try {
     const result = await generateMedicalSummary(patientData, summaryType);
     const docIds = patientData.documents.map((d: any) => d.id);
-    store.saveSummary(req.user.id, result.summary_type, result.content, result.title, docIds);
+    await store.saveSummary(req.user.id, result.summary_type, result.content, result.title, docIds);
     return res.json({
       title: result.title,
       summary_type: result.summary_type,
@@ -505,7 +541,7 @@ app.post('/api/summary/generate', requireAuth, async (req: any, res: any) => {
 });
 
 app.post('/api/summary/analyze', requireAuth, async (req: any, res: any) => {
-  const patientData = store.getPatientData(req.user.id);
+  const patientData = await store.getPatientData(req.user.id);
   if (!patientData.documents || !patientData.documents.length) {
     return res.status(400).json({ error: 'No documents uploaded yet.' });
   }
@@ -513,7 +549,7 @@ app.post('/api/summary/analyze', requireAuth, async (req: any, res: any) => {
   try {
     const analysis = await analyzeMedicalRecords(patientData);
     const docIds = patientData.documents.map((d: any) => d.id);
-    store.saveSummary(req.user.id, 'analysis', JSON.stringify(analysis), 'Medical Records Analysis', docIds);
+    await store.saveSummary(req.user.id, 'analysis', JSON.stringify(analysis), 'Medical Records Analysis', docIds);
     return res.json({ analysis });
   } catch (err: any) {
     return res.status(502).json({ error: err.message || 'Analysis failed' });
@@ -521,7 +557,7 @@ app.post('/api/summary/analyze', requireAuth, async (req: any, res: any) => {
 });
 
 // ──────────────────────────────────────────────────────────────
-// Symptom Checker Routes (Requirement 5)
+// Symptom Checker Routes
 // ──────────────────────────────────────────────────────────────
 
 app.post('/api/symptoms/assess', requireAuth, async (req: any, res: any) => {
@@ -531,9 +567,8 @@ app.post('/api/symptoms/assess', requireAuth, async (req: any, res: any) => {
     return res.status(400).json({ error: 'Please describe your main symptom.' });
   }
 
-  const patientData = store.getPatientData(req.user.id);
-
   try {
+    const patientData = await store.getPatientData(req.user.id);
     const assessment = await assessSymptoms(
       {
         primary_symptom: primary_symptom.trim(),
@@ -545,7 +580,7 @@ app.post('/api/symptoms/assess', requireAuth, async (req: any, res: any) => {
       patientData
     );
 
-    const report = store.saveSymptomReport(req.user.id, {
+    const report = await store.saveSymptomReport(req.user.id, {
       primary_symptom: primary_symptom.trim(),
       duration: duration || 'Recently',
       severity: parseInt(severity || '5', 10),
@@ -560,14 +595,22 @@ app.post('/api/symptoms/assess', requireAuth, async (req: any, res: any) => {
   }
 });
 
-app.get('/api/symptoms/history', requireAuth, (req: any, res: any) => {
-  const reports = store.getSymptomReports(req.user.id);
-  return res.json({ reports });
+app.get('/api/symptoms/history', requireAuth, async (req: any, res: any) => {
+  try {
+    const reports = await store.getSymptomReports(req.user.id);
+    return res.json({ reports });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving symptom history.' });
+  }
 });
 
-app.get('/api/symptoms/latest', requireAuth, (req: any, res: any) => {
-  const report = store.getLatestSymptomReport(req.user.id);
-  return res.json({ report });
+app.get('/api/symptoms/latest', requireAuth, async (req: any, res: any) => {
+  try {
+    const report = await store.getLatestSymptomReport(req.user.id);
+    return res.json({ report });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving latest symptom report.' });
+  }
 });
 
 // ──────────────────────────────────────────────────────────────
@@ -580,25 +623,32 @@ app.post('/api/qa/ask', requireAuth, async (req: any, res: any) => {
     return res.status(400).json({ error: 'Question is required.' });
   }
 
-  const patientData = store.getPatientData(req.user.id);
-
   try {
+    const patientData = await store.getPatientData(req.user.id);
     const answer = await answerQuestion(question, patientData);
-    store.addQA(req.user.id, question, answer);
+    await store.addQA(req.user.id, question, answer);
     return res.json({ question, answer });
   } catch (err: any) {
     return res.status(502).json({ error: err.message || 'Failed to answer question' });
   }
 });
 
-app.get('/api/qa/history', requireAuth, (req: any, res: any) => {
-  const history = store.getQAHistory(req.user.id);
-  return res.json({ history });
+app.get('/api/qa/history', requireAuth, async (req: any, res: any) => {
+  try {
+    const history = await store.getQAHistory(req.user.id);
+    return res.json({ history });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed retrieving Q&A history.' });
+  }
 });
 
-app.delete('/api/qa/history', requireAuth, (req: any, res: any) => {
-  store.clearQAHistory(req.user.id);
-  return res.json({ message: 'Conversation history cleared.' });
+app.delete('/api/qa/history', requireAuth, async (req: any, res: any) => {
+  try {
+    await store.clearQAHistory(req.user.id);
+    return res.json({ message: 'Conversation history cleared.' });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed clearing conversation history.' });
+  }
 });
 
 // ──────────────────────────────────────────────────────────────
@@ -606,24 +656,24 @@ app.delete('/api/qa/history', requireAuth, (req: any, res: any) => {
 // ──────────────────────────────────────────────────────────────
 
 app.post('/api/pdf/generate', requireAuth, async (req: any, res: any) => {
-  const patientData = store.getPatientData(req.user.id);
-  if (!patientData.documents || !patientData.documents.length) {
-    return res.status(400).json({ error: 'No documents uploaded yet.' });
-  }
-
-  const latest = store.getLatestSummary(req.user.id);
-  const summaryText = latest ? latest.content : (await generateMedicalSummary(patientData)).content;
-
-  let analysis: any = null;
-  if (req.body?.include_analysis !== false) {
-    try {
-      analysis = await analyzeMedicalRecords(patientData);
-    } catch {
-      analysis = null;
-    }
-  }
-
   try {
+    const patientData = await store.getPatientData(req.user.id);
+    if (!patientData.documents || !patientData.documents.length) {
+      return res.status(400).json({ error: 'No documents uploaded yet.' });
+    }
+
+    const latest = await store.getLatestSummary(req.user.id);
+    const summaryText = latest ? latest.content : (await generateMedicalSummary(patientData)).content;
+
+    let analysis: any = null;
+    if (req.body?.include_analysis !== false) {
+      try {
+        analysis = await analyzeMedicalRecords(patientData);
+      } catch {
+        analysis = null;
+      }
+    }
+
     const pdfBuffer = await generateSummaryPdf(patientData, summaryText, analysis);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="medical_summary.pdf"');
@@ -667,7 +717,7 @@ app.get('*', (_req, res) => {
 // Start server
 app.listen(port, '0.0.0.0', () => {
   console.log(`====================================================`);
-  console.log(`  Medical Report AI`);
+  console.log(`  Medical Report AI (Supabase PostgreSQL Backed)`);
   console.log(`  http://0.0.0.0:${port}`);
   console.log(`====================================================`);
 });

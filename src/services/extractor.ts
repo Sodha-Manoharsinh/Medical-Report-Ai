@@ -25,44 +25,74 @@ function customPagerender(pageData: any): Promise<string> {
 export async function extractText(filepath: string, fileType: string): Promise<string> {
   const ext = fileType.toLowerCase().replace(/^\./, '');
 
-  if (ext === 'txt') {
+  if (ext === 'txt' || ext === 'csv' || ext === 'log') {
     return fs.readFileSync(filepath, 'utf-8');
   }
 
+  // 1. PDF extraction
   if (ext === 'pdf') {
+    let pdfText = '';
     try {
       const dataBuffer = fs.readFileSync(filepath);
       const parsed = await pdfParse(dataBuffer, { pagerender: customPagerender });
       if (parsed && parsed.text && parsed.text.trim()) {
-        return parsed.text;
+        pdfText = parsed.text;
       }
     } catch (err) {
       console.warn('pdf-parse custom pagerender failed, falling back to standard extraction:', err);
     }
 
-    try {
-      const dataBuffer = fs.readFileSync(filepath);
-      const parsed = await pdfParse(dataBuffer);
-      if (parsed && parsed.text && parsed.text.trim()) {
-        return parsed.text;
+    if (!pdfText.trim()) {
+      try {
+        const dataBuffer = fs.readFileSync(filepath);
+        const parsed = await pdfParse(dataBuffer);
+        if (parsed && parsed.text && parsed.text.trim()) {
+          pdfText = parsed.text;
+        }
+      } catch (err) {
+        console.warn('standard pdf-parse failed:', err);
       }
-    } catch (err) {
-      console.warn('standard pdf-parse failed:', err);
+    }
+
+    if (pdfText && pdfText.trim().length > 30) {
+      return pdfText;
     }
 
     // Fallback: extract printable strings from PDF buffer
     try {
       const raw = fs.readFileSync(filepath, 'utf-8');
       const textMatches = raw.match(/\(([^()]{2,})\)/g);
-      if (textMatches) {
-        return textMatches.map((m) => m.slice(1, -1)).join(' ');
+      if (textMatches && textMatches.length > 5) {
+        const joined = textMatches.map((m) => m.slice(1, -1)).join(' ');
+        if (joined.length > 30) return joined;
       }
     } catch {
       // ignore
     }
-    return '';
+
+    if (pdfText && pdfText.trim().length > 0) {
+      return pdfText;
+    }
   }
 
+  // 2. Images (PNG, JPG, JPEG, WEBP, BMP, TIFF, GIF) - Tesseract OCR
+  const imageExts = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'gif'];
+  if (imageExts.includes(ext)) {
+    try {
+      const { createWorker } = await import('tesseract.js');
+      const worker = await createWorker('eng');
+      const ret = await worker.recognize(filepath);
+      await worker.terminate();
+      if (ret?.data?.text && ret.data.text.trim()) {
+        console.log(`[OCR] Successfully extracted ${ret.data.text.trim().length} chars from ${filepath}`);
+        return ret.data.text.trim();
+      }
+    } catch (ocrErr: any) {
+      console.warn('[OCR] Tesseract error processing image:', ocrErr?.message || ocrErr);
+    }
+  }
+
+  // 3. Word Documents
   if (ext === 'doc' || ext === 'docx') {
     try {
       const content = fs.readFileSync(filepath, 'utf-8');
@@ -75,7 +105,12 @@ export async function extractText(filepath: string, fileType: string): Promise<s
 
   // Generic fallback
   try {
-    return fs.readFileSync(filepath, 'utf-8');
+    const raw = fs.readFileSync(filepath, 'utf-8');
+    // Only return if printable ASCII/Unicode
+    if (/^[ -~\t\n\r]+$/.test(raw.slice(0, 500))) {
+      return raw;
+    }
+    return '';
   } catch {
     return '';
   }
