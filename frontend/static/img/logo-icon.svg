@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 340" width="100%" height="100%">
+  <defs>
+    <linearGradient id="iconBrainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00b4d8"/>
+      <stop offset="60%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#034078"/>
+    </linearGradient>
+    <linearGradient id="iconSwooshGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#00509d"/>
+      <stop offset="40%" stop-color="#0077b6"/>
+      <stop offset="85%" stop-color="#00b4d8"/>
+      <stop offset="100%" stop-color="#00c49f"/>
+    </linearGradient>
+    <filter id="iconGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+
+  <!-- AI Brain Circuit (Right Side Behind Document) -->
+  <g transform="translate(130, 25)" filter="url(#iconGlow)">
+    <path d="M45,150 C30,135 25,100 35,75 C45,50 75,40 100,50 C115,25 155,20 180,45 C205,35 235,55 235,85 C250,105 245,140 225,165 C235,185 220,215 195,225 C175,235 150,220 140,210 C130,225 100,230 80,215 C60,200 65,175 45,150 Z" 
+          fill="url(#iconBrainGrad)"/>
+    
+    <!-- White Brain Circuit lines & nodes -->
+    <g stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <circle cx="85" cy="85" r="6" fill="#ffffff"/>
+      <path d="M85,92 L85,120 L110,135"/>
+      <circle cx="145" cy="70" r="6" fill="#ffffff"/>
+      <path d="M145,77 L145,110 L110,135"/>
+      <path d="M110,135 L110,185"/>
+      <circle cx="180" cy="115" r="6" fill="#ffffff"/>
+      <path d="M180,122 L150,145 L110,145"/>
+      <circle cx="170" cy="175" r="6" fill="#ffffff"/>
+      <path d="M170,175 L135,175 L110,160"/>
+      <circle cx="150" cy="205" r="6" fill="#ffffff"/>
+      <path d="M150,200 L125,185"/>
+    </g>
+  </g>
+
+  <!-- Left Back Swoosh -->
+  <path d="M30,175 C0,200 20,230 55,240 C95,250 130,245 160,240 C120,255 60,250 30,230 C-5,205 5,175 30,175 Z" 
+        fill="#00509d"/>
+
+  <!-- Document Base (White Card with Blue Outline) -->
+  <g transform="translate(65, 70)">
+    <path d="M25,0 L120,0 L160,40 L160,185 C160,198 149,208 136,208 L24,208 C11,208 0,198 0,185 L0,24 C0,11 11,0 24,0 Z" 
+          fill="#ffffff" stroke="#0077b6" stroke-width="8" stroke-linejoin="round"/>
+    
+    <!-- Folded Dog-Ear Top Right -->
+    <path d="M120,0 L120,38 C120,41 123,44 126,44 L160,44 Z" fill="#0077b6"/>
+    
+    <!-- Document Header Text Bars -->
+    <rect x="26" y="32" width="60" height="7" rx="3.5" fill="#48cae4"/>
+    <rect x="26" y="50" width="85" height="7" rx="3.5" fill="#48cae4"/>
+    
+    <!-- Bold Medical Cross -->
+    <g transform="translate(48, 75)">
+      <path d="M24,0 L40,0 L40,24 L64,24 L64,40 L40,40 L40,64 L24,64 L24,40 L0,40 L0,24 L24,24 Z" 
+            fill="#0077b6"/>
+    </g>
+
+    <!-- Document Footer Text Bars -->
+    <rect x="75" y="142" width="55" height="7" rx="3.5" fill="#48cae4"/>
+    <rect x="58" y="160" width="72" height="7" rx="3.5" fill="#48cae4"/>
+  </g>
+
+  <!-- Orbital Dynamic Swoosh Ring (Foreground Wraparound) -->
+  <path d="M25,185 C55,155 150,180 240,185 C285,188 320,205 315,235 C310,265 250,285 170,285 C100,285 65,265 68,245 C70,225 120,245 175,245 C245,245 275,225 275,215 C275,200 225,190 160,185 C95,180 30,190 25,185 Z" 
+        fill="url(#iconSwooshGrad)"/>
+</svg>

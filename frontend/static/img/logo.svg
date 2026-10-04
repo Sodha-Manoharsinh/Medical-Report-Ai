@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Gradients matching the official branding -->
+    <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00a896"/>
+      <stop offset="35%" stop-color="#0284c7"/>
+      <stop offset="70%" stop-color="#0077b6"/>
+      <stop offset="100%" stop-color="#03045e"/>
+    </linearGradient>
+    <linearGradient id="brainTealGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00b4d8"/>
+      <stop offset="60%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#034078"/>
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0077b6"/>
+      <stop offset="50%" stop-color="#00b4d8"/>
+      <stop offset="100%" stop-color="#00c49f"/>
+    </linearGradient>
+    <linearGradient id="swooshGrad" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#00509d"/>
+      <stop offset="40%" stop-color="#0077b6"/>
+      <stop offset="85%" stop-color="#00b4d8"/>
+      <stop offset="100%" stop-color="#00c49f"/>
+    </linearGradient>
+    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0077b6"/>
+      <stop offset="45%" stop-color="#00b4d8"/>
+      <stop offset="60%" stop-color="#00c49f"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- ==================== ICON EMBLEM ==================== -->
+  <g transform="translate(0, -10)">
+    
+    <!-- AI Brain Circuit (Right Side Behind Document) -->
+    <g transform="translate(230, 70)" filter="url(#subtleGlow)">
+      <!-- Brain Silhouette Lobes -->
+      <path d="M45,150 C30,135 25,100 35,75 C45,50 75,40 100,50 C115,25 155,20 180,45 C205,35 235,55 235,85 C250,105 245,140 225,165 C235,185 220,215 195,225 C175,235 150,220 140,210 C130,225 100,230 80,215 C60,200 65,175 45,150 Z" 
+            fill="url(#brainTealGrad)"/>
+      
+      <!-- Brain Circuit Lines and Nodes (White) -->
+      <g stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+        <!-- Node 1 -->
+        <circle cx="85" cy="85" r="7" fill="#ffffff"/>
+        <path d="M85,92 L85,120 L110,135"/>
+        
+        <!-- Node 2 -->
+        <circle cx="145" cy="70" r="7" fill="#ffffff"/>
+        <path d="M145,77 L145,110 L110,135"/>
+        
+        <!-- Center Spine -->
+        <path d="M110,135 L110,185"/>
+        
+        <!-- Node 3 -->
+        <circle cx="180" cy="115" r="7" fill="#ffffff"/>
+        <path d="M180,122 L150,145 L110,145"/>
+        
+        <!-- Node 4 -->
+        <circle cx="170" cy="175" r="7" fill="#ffffff"/>
+        <path d="M170,175 L135,175 L110,160"/>
+        
+        <!-- Node 5 -->
+        <circle cx="150" cy="205" r="7" fill="#ffffff"/>
+        <path d="M150,200 L125,185"/>
+      </g>
+    </g>
+
+    <!-- Lower Swoosh Behind Document (Left) -->
+    <path d="M125,215 C90,240 110,270 145,280 C185,290 220,285 250,280 C210,295 150,290 120,270 C85,245 95,215 125,215 Z" 
+          fill="#00509d"/>
+
+    <!-- Document Base (White Card with Rich Navy/Blue Outline) -->
+    <g transform="translate(160, 115)">
+      <!-- Main Paper Body -->
+      <path d="M25,0 L120,0 L160,40 L160,185 C160,198 149,208 136,208 L24,208 C11,208 0,198 0,185 L0,24 C0,11 11,0 24,0 Z" 
+            fill="#ffffff" stroke="#0077b6" stroke-width="9" stroke-linejoin="round"/>
+      
+      <!-- Folded Dog-Ear Top Right -->
+      <path d="M120,0 L120,38 C120,41 123,44 126,44 L160,44 Z" 
+            fill="#0077b6"/>
+      
+      <!-- Document Header Text Bars -->
+      <rect x="26" y="32" width="60" height="7" rx="3.5" fill="#48cae4"/>
+      <rect x="26" y="50" width="85" height="7" rx="3.5" fill="#48cae4"/>
+      
+      <!-- Bold Medical Cross -->
+      <g transform="translate(48, 75)">
+        <path d="M24,0 L40,0 L40,24 L64,24 L64,40 L40,40 L40,64 L24,64 L24,40 L0,40 L0,24 L24,24 Z" 
+              fill="#0077b6"/>
+      </g>
+
+      <!-- Document Footer Text Bars -->
+      <rect x="75" y="142" width="55" height="7" rx="3.5" fill="#48cae4"/>
+      <rect x="58" y="160" width="72" height="7" rx="3.5" fill="#48cae4"/>
+    </g>
+
+    <!-- Orbital Dynamic Swoosh Ring (Foreground Wraparound) -->
+    <path d="M115,225 C145,195 240,220 330,225 C375,228 410,245 405,275 C400,305 340,325 260,325 C190,325 155,305 158,285 C160,265 210,285 265,285 C335,285 365,265 365,255 C365,240 315,230 250,225 C185,220 120,230 115,225 Z" 
+          fill="url(#swooshGrad)"/>
+    <path d="M165,300 C155,300 152,290 155,278 L165,300 Z" fill="#00509d"/>
+  </g>
+
+  <!-- ==================== BRAND NAME ==================== -->
+  <g transform="translate(250, 395)" text-anchor="middle">
+    <text font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" 
+          font-size="46" 
+          font-weight="900" 
+          letter-spacing="-0.5">
+      <tspan fill="#0a192f">Medical Report </tspan>
+      <tspan fill="url(#aiGrad)">AI</tspan>
+    </text>
+  </g>
+
+  <!-- ==================== PULSE ECG HEARTBEAT UNDERLINE ==================== -->
+  <g transform="translate(100, 420)">
+    <path d="M 0,16 L 140,16 L 150,26 L 160,-2 L 170,34 L 180,8 L 188,16 L 300,16" 
+          fill="none" 
+          stroke="url(#pulseGrad)" 
+          stroke-width="4.5" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+  </g>
+</svg>

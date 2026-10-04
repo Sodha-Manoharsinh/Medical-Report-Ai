@@ -766,4 +766,3 @@ Users should consult an appropriate medical professional for diagnosis, treatmen
 **Repository:** `medical-report-ai`
 
 **Primary Technologies:** Python, Flask, PostgreSQL, IBM Bob AI, HTML, CSS, JavaScript
-# Medical-Report-Ai

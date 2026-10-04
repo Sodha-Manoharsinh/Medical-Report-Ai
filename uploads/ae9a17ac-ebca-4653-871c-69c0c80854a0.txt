@@ -1,0 +1,29 @@
+Patient: Sarah Jenkins
+Age: 42 Years
+Gender: Female
+Blood Group: O Positive
+ABHA ID: 91-4521-9876-1234
+Report Date: 12/04/2026
+
+LABORATORY FINDINGS:
+Hemoglobin: 10.8 g/dL (Normal Range: 12.0 - 15.5 g/dL) - Low
+Fasting Blood Sugar: 142 mg/dL (Normal Range: 70 - 99 mg/dL) - High
+HbA1c: 7.2 % (Normal Range: 4.0 - 5.6 %) - High
+Serum Cholesterol: 235 mg/dL (Normal Range: < 200 mg/dL) - High
+Serum Creatinine: 0.9 mg/dL (Normal Range: 0.6 - 1.2 mg/dL) - Normal
+
+VITALS:
+Blood Pressure: 138/88 mmHg
+Heart Rate: 78 bpm
+SpO2: 98 %
+
+DIAGNOSIS:
+Type 2 Diabetes Mellitus
+Mild Microcytic Anemia
+
+MEDICATIONS:
+Metformin 500mg - Twice daily after meals
+Ferrous Ascorbate 100mg - Once daily
+
+ALLERGIES:
+Penicillin - Causes cutaneous skin rash

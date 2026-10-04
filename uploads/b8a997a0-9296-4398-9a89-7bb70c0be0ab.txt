@@ -1,0 +1,5 @@
+Patient: Eleanor Vance
+Age: 32 Years
+Gender: Female
+ABHA Number: 91-8842-1209-4321
+Hemoglobin 14.5 g/dL 13.0 - 17.0 g/dL Normal

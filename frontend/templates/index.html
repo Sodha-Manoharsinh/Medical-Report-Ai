@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medical Report AI</title>
+  <meta name="description" content="Secure medical document analysis & summarisation platform" />
+  <meta property="og:title" content="Medical Report AI" />
+  <meta property="og:description" content="Secure medical document analysis & summarisation platform" />
+  <link rel="icon" type="image/svg+xml" href="/img/logo-icon.svg" />
+  <link rel="stylesheet" href="/css/styles.css?v=4.6" />
+</head>
+<body>
+
+<!-- ===================== AUTH ROOT ===================== -->
+<div id="auth-root" class="auth-root">
+  <div class="auth-card auth-card-wide">
+
+    <!-- SCREEN: LOGIN -->
+    <div id="screen-login">
+      <div class="auth-logo">
+        <img src="/img/logo.svg" alt="Medical Report AI Logo" class="auth-brand-img" />
+        <p class="auth-subtitle">Secure Clinical Document Intelligence &amp; Patient Portal</p>
+        <div class="auth-trust-pills">
+          <span class="trust-pill">🔒 256-Bit Encrypted</span>
+          <span class="trust-pill">🛡️ HIPAA Compliant Storage</span>
+          <span class="trust-pill">⚡ Neural AI Assisted</span>
+        </div>
+      </div>
+
+      <div class="auth-quick-demo">
+        <button type="button" class="btn-demo-autofill" onclick="fillDemoPatient()">
+          <span>⚡ Auto-fill Demo Patient</span>
+        </button>
+      </div>
+
+      <form onsubmit="doLogin(event)" id="login-form">
+        <div id="login-error" class="alert alert-error" style="display:none"></div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="login-name">
+              <span>👤 Patient Full Name</span>
+              <span class="label-req">*</span>
+            </label>
+            <input
+              type="text"
+              id="login-name"
+              placeholder="e.g. Eleanor Vance"
+              required
+              autocomplete="name"
+            />
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="login-gender">
+              <span>⚧ Gender / Sex</span>
+            </label>
+            <select id="login-gender" class="form-select">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="login-dob">
+              <span>📅 Date of Birth</span>
+              <span class="label-req">*</span>
+            </label>
+            <input
+              type="date"
+              id="login-dob"
+              required
+              onchange="onDobChanged()"
+              autocomplete="bday"
+            />
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="login-age">
+              <span>🎂 Age (Years)</span>
+              <span class="label-req">*</span>
+            </label>
+            <input
+              type="number"
+              id="login-age"
+              min="0"
+              max="130"
+              placeholder="e.g. 29"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="login-email">
+              <span>✉️ Email Address</span>
+              <span class="label-req">*</span>
+            </label>
+            <input
+              type="email"
+              id="login-email"
+              placeholder="patient@example.com"
+              required
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="form-group flex-1">
+            <label for="login-phone">
+              <span>📱 Phone Number</span>
+              <span class="label-req">*</span>
+            </label>
+            <input
+              type="tel"
+              id="login-phone"
+              placeholder="+1 555 019 2834"
+              required
+              autocomplete="tel"
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary btn-submit-auth" id="btn-continue">
+          <span>Continue to Secure Verification</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+
+      <div class="auth-footer-notice">
+        <span>🔐 Clinical records are strictly isolated. Verification OTP will be generated.</span>
+      </div>
+    </div>
+
+    <!-- SCREEN: OTP VERIFICATION -->
+    <div id="screen-otp" style="display:none">
+      <div class="auth-logo">
+        <div class="auth-icon-badge">
+          <span class="icon">🔐</span>
+        </div>
+        <h1>Security Verification</h1>
+        <p class="auth-subtitle">
+          Enter the 6-digit OTP code sent for <strong id="otp-target-display" style="color:var(--primary)">patient account</strong>
+        </p>
+      </div>
+
+      <!-- Dev mode OTP hint -->
+      <div id="dev-otp-box" class="dev-otp-box" style="display:none">
+        <div class="dev-otp-header">
+          <span>🛠️ Test Mode Security Code</span>
+          <button type="button" class="btn-otp-paste" onclick="insertDevOtp()">⚡ Paste Code</button>
+        </div>
+        <strong id="dev-otp-value">——</strong>
+        <span style="font-size:11px;color:#a16207">(Development verification mode active)</span>
+      </div>
+
+      <form onsubmit="doVerifyOtp(event)" id="otp-form">
+        <div id="otp-error" class="alert alert-error" style="display:none"></div>
+
+        <div class="otp-inputs" id="otp-inputs-container">
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="0" autofocus />
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="1" />
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="2" />
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="3" />
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="4" />
+          <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" data-index="5" />
+        </div>
+
+        <button type="submit" class="btn-primary btn-submit-auth" id="btn-verify">
+          <span>Verify &amp; Open Medical Portal</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </form>
+
+      <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-muted)">
+        <a href="#" onclick="backToLogin(); return false;" style="font-weight:600">← Back to Patient Info</a>
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="app">
+
+  <!-- Header -->
+  <header class="header">
+    <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" aria-label="Toggle navigation menu">
+      <span class="menu-icon">☰</span>
+    </button>
+    <div class="header-logo" onclick="showPage('dashboard')" style="cursor:pointer" title="Medical Report AI Portal">
+      <img src="/img/logo-icon.svg" class="header-logo-img" alt="Medical Report AI" />
+      <span class="header-brand-name">Medical Report <span class="brand-ai-accent">AI</span></span>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-user" onclick="showAccountDetailsModal()" style="cursor:pointer" title="Click to view Account Holder Details" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showAccountDetailsModal();}">
+      <div class="user-avatar" id="user-initials" onclick="event.stopPropagation();showAccountDetailsModal()" title="View Account Details">U</div>
+      <span id="user-email-display" class="user-email-text"></span>
+      <button class="btn-logout" type="button" onclick="event.stopPropagation();promptLogout()" title="Log out of account">
+        <span>Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Shell -->
+  <div class="shell">
+
+    <!-- Mobile Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="app-sidebar">
+      <div class="sidebar-mobile-header">
+        <div style="display:flex;align-items:center;gap:8px">
+          <img src="/img/logo-icon.svg" style="width:26px;height:26px" alt="Logo" />
+          <span style="font-weight:800;color:var(--primary);font-size:15px">Medical Report AI</span>
+        </div>
+        <button type="button" class="sidebar-close-btn" onclick="closeMobileSidebar()" aria-label="Close menu">&times;</button>
+      </div>
+      <div class="sidebar-section">Navigation</div>
+      <ul class="sidebar-nav">
+        <li><a href="#" data-page="dashboard" class="active" onclick="showPage('dashboard');return false;">
+          <span class="nav-icon">🏠</span> Dashboard
+        </a></li>
+        <li><a href="#" data-page="documents" onclick="showPage('documents');return false;">
+          <span class="nav-icon">📂</span> Documents
+        </a></li>
+        <li><a href="#" data-page="summary" onclick="showPage('summary');return false;">
+          <span class="nav-icon">📋</span> Medical Summary
+        </a></li>
+        <li><a href="#" data-page="symptoms" onclick="showPage('symptoms');return false;">
+          <span class="nav-icon">🩺</span> Symptom Checker
+        </a></li>
+        <li><a href="#" data-page="qa" onclick="showPage('qa');return false;">
+          <span class="nav-icon">💬</span> Q&amp;A Assistant
+        </a></li>
+      </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ======== PAGE: DASHBOARD ======== -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-title">🏠 Dashboard</div>
+
+        <!-- Patient Profile Summary Card -->
+        <div class="card" id="patient-profile-card" style="margin-bottom:16px;display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <h2>👤 Extracted Patient Profile</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:10px;font-size:13px">
+            <div style="background:var(--surface-2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">
+              <div style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">Full Name</div>
+              <div id="prof-name" style="font-weight:700;font-size:15px;color:var(--primary);margin-top:2px">—</div>
+            </div>
+            <div style="background:var(--surface-2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">
+              <div style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">Age</div>
+              <div id="prof-age" style="font-weight:700;font-size:15px;color:var(--primary);margin-top:2px">—</div>
+            </div>
+            <div style="background:var(--surface-2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">
+              <div style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">Gender / Sex</div>
+              <div id="prof-gender" style="font-weight:700;font-size:15px;color:var(--primary);margin-top:2px">—</div>
+            </div>
+            <div style="background:var(--surface-2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border)">
+              <div style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">Date of Birth</div>
+              <div id="prof-dob" style="font-weight:600;font-size:13px;color:var(--primary);margin-top:2px">—</div>
+            </div>
+            <div id="prof-abha-container" style="background:var(--surface-2);padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);display:none">
+              <div style="color:var(--text-muted);font-size:11px;font-weight:700;text-transform:uppercase">ABHA Health ID</div>
+              <div id="prof-abha" style="font-weight:600;font-size:13px;color:var(--primary);margin-top:2px">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📂</div>
+            <div class="stat-value" id="stat-docs">—</div>
+            <div class="stat-label">Documents Uploaded</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🧪</div>
+            <div class="stat-value" id="stat-labs">—</div>
+            <div class="stat-label">Lab Results</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💊</div>
+            <div class="stat-value" id="stat-meds">—</div>
+            <div class="stat-label">Medications</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🩺</div>
+            <div class="stat-value" id="stat-diags">—</div>
+            <div class="stat-label">Diagnoses</div>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="card">
+          <h2>⚡ Quick Clinical Actions</h2>
+          <div class="quick-actions-grid">
+            <button type="button" class="quick-action-tile" onclick="showPage('documents')">
+              <span class="quick-tile-icon" style="background:#e0f2fe;color:#0284c7">⬆️</span>
+              <div class="quick-tile-text">
+                <strong>Upload Records</strong>
+                <span>Add PDFs, lab tests &amp; scans</span>
+              </div>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="showPage('summary')">
+              <span class="quick-tile-icon" style="background:#ecfdf5;color:#059669">📋</span>
+              <div class="quick-tile-text">
+                <strong>Clinical Summary</strong>
+                <span>Synthesize medical history</span>
+              </div>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="showPage('symptoms')">
+              <span class="quick-tile-icon" style="background:#fef3c7;color:#d97706">🩺</span>
+              <div class="quick-tile-text">
+                <strong>Symptom Triage</strong>
+                <span>Evaluate symptoms with AI</span>
+              </div>
+            </button>
+            <button type="button" class="quick-action-tile" onclick="showPage('qa')">
+              <span class="quick-tile-icon" style="background:#f3e8ff;color:#7c3aed">💬</span>
+              <div class="quick-tile-text">
+                <strong>Doctor AI Chat</strong>
+                <span>Ask questions about reports</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent documents -->
+        <div class="card">
+          <h2>📂 Recent Documents</h2>
+          <div id="recent-docs-list">
+            <div class="loading-overlay"><span class="loader loader-dark"></span> Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== PAGE: DOCUMENTS ======== -->
+      <div id="page-documents" class="page">
+        <div class="page-title">📂 Documents</div>
+
+        <!-- Upload zone -->
+        <div class="card">
+          <h2>⬆ Upload Medical Documents</h2>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.gif,.tiff,.bmp,.txt,.doc,.docx" />
+            <div class="upload-icon">📁</div>
+            <h3>Drag &amp; drop files here, or click to browse</h3>
+            <p>Supported: PDF, Images (PNG/JPG/TIFF), TXT, DOC, DOCX &nbsp;·&nbsp; Max 50 MB per file</p>
+          </div>
+          <div id="upload-progress-container" style="margin-top:14px"></div>
+        </div>
+
+        <!-- Document list -->
+        <div class="card">
+          <h2>📋 Uploaded Documents</h2>
+          <div id="docs-list">
+            <div class="loading-overlay"><span class="loader loader-dark"></span> Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== PAGE: MEDICAL SUMMARY ======== -->
+      <div id="page-summary" class="page">
+        <div class="page-title">📋 Medical Summary</div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar">
+          <button class="tab-btn active" data-tab-group="summary" data-tab-id="overview" onclick="switchTab('summary','overview')">Overview Summary</button>
+          <button class="tab-btn" data-tab-group="summary" data-tab-id="labresults" onclick="switchTab('summary','labresults')">Lab Results</button>
+          <button class="tab-btn" data-tab-group="summary" data-tab-id="vitals" onclick="switchTab('summary','vitals')">Vital Signs</button>
+          <button class="tab-btn" data-tab-group="summary" data-tab-id="diagnoses" onclick="switchTab('summary','diagnoses')">Diagnoses &amp; Allergies</button>
+          <button class="tab-btn" data-tab-group="summary" data-tab-id="analysis" onclick="switchTab('summary','analysis')">Analysis</button>
+        </div>
+
+        <!-- Tab: Overview Summary -->
+        <div class="tab-content active" data-tab-content="summary" data-tab-id="overview">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+              <div>
+                <h2 id="summary-display-title" style="margin-bottom:4px">📄 Comprehensive Medical Assessment</h2>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span id="summary-type-badge" class="badge-pill badge-primary">Comprehensive Assessment</span>
+                  <span id="summary-generated-at" style="font-size:12px;color:var(--text-muted)"></span>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button class="btn-accent" id="btn-generate-summary" onclick="generateSummary()">♻ Generate / Refresh</button>
+                <button class="btn-secondary" id="btn-download-pdf" onclick="downloadPDF()">⬇ Download PDF Report</button>
+              </div>
+            </div>
+
+            <!-- Summary Type Toolbar -->
+            <div class="summary-type-toolbar">
+              <div class="summary-toolbar-header">
+                <span class="toolbar-label">Clinical Synthesis Focus:</span>
+                <span class="toolbar-hint">Select a specialized report perspective based on your medical records</span>
+              </div>
+              <div class="summary-toolbar-buttons">
+                <button type="button" class="summary-type-btn active" data-sumtype="comprehensive" onclick="selectSummaryType('comprehensive')">
+                  <span class="btn-icon">📄</span>
+                  <span class="btn-text">
+                    <strong>Comprehensive</strong>
+                    <small>Full Clinical Synthesis</small>
+                  </span>
+                </button>
+                <button type="button" class="summary-type-btn" data-sumtype="executive" onclick="selectSummaryType('executive')">
+                  <span class="btn-icon">⚡</span>
+                  <span class="btn-text">
+                    <strong>Executive Overview</strong>
+                    <small>High-Level Highlights</small>
+                  </span>
+                </button>
+                <button type="button" class="summary-type-btn" data-sumtype="medications" onclick="selectSummaryType('medications')">
+                  <span class="btn-icon">💊</span>
+                  <span class="btn-text">
+                    <strong>Medication Review</strong>
+                    <small>Regimen &amp; Dosing</small>
+                  </span>
+                </button>
+                <button type="button" class="summary-type-btn" data-sumtype="diagnostics" onclick="selectSummaryType('diagnostics')">
+                  <span class="btn-icon">🧪</span>
+                  <span class="btn-text">
+                    <strong>Lab &amp; Diagnostics</strong>
+                    <small>Biomarker Trends</small>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <div id="summary-content" class="summary-text">
+              <div class="loading-overlay"><span class="loader loader-dark"></span> Loading…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Lab Results -->
+        <div class="tab-content" data-tab-content="summary" data-tab-id="labresults">
+          <div class="card">
+            <h2>🧪 Laboratory Results</h2>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Test</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="lab-table-body">
+                <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab: Vital Signs -->
+        <div class="tab-content" data-tab-content="summary" data-tab-id="vitals">
+          <div class="card">
+            <h2>💓 Vital Signs</h2>
+            <table class="data-table">
+              <thead>
+                <tr><th>Measurement</th><th>Value</th><th>Unit</th><th>Date</th></tr>
+              </thead>
+              <tbody id="vitals-table-body">
+                <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab: Diagnoses & Allergies -->
+        <div class="tab-content" data-tab-content="summary" data-tab-id="diagnoses">
+          <div class="card">
+            <h2>🩺 Recorded Diagnoses</h2>
+            <div id="diagnoses-list" style="padding:8px 0">Loading…</div>
+          </div>
+          <div class="card">
+            <h2>⚠ Allergies</h2>
+            <div id="allergies-list" style="padding:8px 0">Loading…</div>
+          </div>
+        </div>
+
+        <!-- Tab: Analysis -->
+        <div class="tab-content" data-tab-content="summary" data-tab-id="analysis">
+          <div class="card">
+            <h2>📊 Medical Analysis</h2>
+            <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
+              Analyze all uploaded records for timeline, medication summary, notable changes, and missing information.
+            </p>
+            <button class="btn-accent" id="btn-run-analysis" onclick="runAnalysis()">▶ Run Analysis</button>
+          </div>
+          <div id="analysis-container"></div>
+        </div>
+
+      </div>
+
+      <!-- ======== PAGE: SYMPTOM CHECKER ======== -->
+      <div id="page-symptoms" class="page">
+        <div class="page-title">
+          <span>🩺</span> Symptom Checker &amp; Clinical Intake
+        </div>
+
+        <div class="card symptom-intake-card">
+          <div class="symptom-header-banner">
+            <div>
+              <h2 style="margin-bottom:4px">Clinical Symptom Assessment</h2>
+              <p style="color:var(--text-muted);font-size:13px">
+                Report your current physical complaints. The AI correlates your symptoms with your uploaded diagnostic records to evaluate potential acute issues and guide your next clinical steps.
+              </p>
+            </div>
+            <div class="symptom-security-tag">
+              <span>🔒 Record Correlated</span>
+            </div>
+          </div>
+
+          <form id="symptom-form" onsubmit="submitSymptomForm(event)">
+            <!-- Step 1: Chief Complaint -->
+            <div class="symptom-step">
+              <div class="symptom-step-title">
+                <span class="symptom-step-num">1</span>
+                <span>What is your primary symptom or chief complaint? <span class="label-req">*</span></span>
+              </div>
+              <p class="symptom-step-sub">Select a common complaint or type your exact symptoms below:</p>
+              
+              <div class="symptom-quick-chips">
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Throbbing headache in temples')">
+                  <span>🤕</span> Headache
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Chest tightness and discomfort')">
+                  <span>🫀</span> Chest Tightness
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Shortness of breath on mild exertion')">
+                  <span>🫁</span> Shortness of Breath
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'High fever with chills and sweating')">
+                  <span>🌡️</span> Fever &amp; Chills
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Abdominal cramping and sharp stomach pain')">
+                  <span>🤢</span> Stomach Pain
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Extreme exhaustion, lethargy, and body fatigue')">
+                  <span>⚡</span> Severe Fatigue
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Dizziness, lightheadedness, and imbalance')">
+                  <span>💫</span> Dizziness
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Persistent dry cough and throat irritation')">
+                  <span>🤧</span> Persistent Cough
+                </button>
+                <button type="button" class="symptom-chip-btn" onclick="setPrimaryChip(this, 'Joint stiffness, swelling, and muscle ache')">
+                  <span>🦴</span> Joint Pain
+                </button>
+              </div>
+
+              <div class="symptom-input-wrapper">
+                <span class="symptom-input-icon">🔍</span>
+                <input
+                  type="text"
+                  id="sym-primary"
+                  class="symptom-primary-input"
+                  placeholder="Describe your symptom (e.g. Sharp pain under right ribs after eating, throbbing forehead pain...)"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Step 2: Duration & Severity in a clean 2-column grid -->
+            <div class="symptom-step">
+              <div class="symptom-grid-2col">
+                <!-- Duration -->
+                <div class="symptom-col">
+                  <div class="symptom-step-title">
+                    <span class="symptom-step-num">2</span>
+                    <label for="sym-duration">Onset &amp; Duration <span class="label-req">*</span></label>
+                  </div>
+                  <p class="symptom-step-sub">How long have you felt this symptom?</p>
+                  <select id="sym-duration" class="form-select symptom-select">
+                    <option value="Just started today (acute onset)">⚡ Just started today (&lt; 24 hours)</option>
+                    <option value="2 to 3 days">📅 2 to 3 days</option>
+                    <option value="About 1 week">🗓️ About 1 week</option>
+                    <option value="2 to 4 weeks">⏳ 2 to 4 weeks</option>
+                    <option value="More than a month (chronic)">🔄 More than a month (chronic / recurring)</option>
+                  </select>
+                </div>
+
+                <!-- Severity Scale -->
+                <div class="symptom-col">
+                  <div class="symptom-step-title">
+                    <span class="symptom-step-num">3</span>
+                    <label>Severity &amp; Pain Level <span class="label-req">*</span></label>
+                  </div>
+                  <p class="symptom-step-sub">Slide to rate intensity from 1 (Mild) to 10 (Critical):</p>
+                  
+                  <div class="severity-control-card">
+                    <div class="severity-header-row">
+                      <span class="severity-scale-txt">Current Level:</span>
+                      <span id="severity-label" class="severity-badge-pill severity-moderate">5 · Moderate</span>
+                    </div>
+                    <div class="severity-slider-track-wrap">
+                      <input
+                        type="range"
+                        id="sym-severity"
+                        min="1"
+                        max="10"
+                        value="5"
+                        oninput="updateSeverityLabel(this.value)"
+                        class="severity-range-slider"
+                      />
+                    </div>
+                    <div class="severity-markers">
+                      <span>1 Mild</span>
+                      <span>5 Moderate</span>
+                      <span>8 Severe</span>
+                      <span>10 Emergency</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Associated Symptoms Grid -->
+            <div class="symptom-step">
+              <div class="symptom-step-title">
+                <span class="symptom-step-num">4</span>
+                <span>Associated Symptoms (Select any that apply)</span>
+              </div>
+              <p class="symptom-step-sub">Check off any secondary signs to assist the AI in narrowing down diagnoses:</p>
+              
+              <div class="associated-symptoms-grid" id="associated-symptoms-chips">
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Nausea / Vomiting" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🤢</span>
+                  <div class="sym-card-text">
+                    <strong>Nausea &amp; Vomiting</strong>
+                    <small>Stomach upset or sickness</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Fever / Sweating" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🌡️</span>
+                  <div class="sym-card-text">
+                    <strong>Fever &amp; Chills</strong>
+                    <small>High temp or sweating</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Dizziness / Vertigo" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">💫</span>
+                  <div class="sym-card-text">
+                    <strong>Dizziness / Vertigo</strong>
+                    <small>Lightheadedness or spin</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Shortness of breath" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🫁</span>
+                  <div class="sym-card-text">
+                    <strong>Shortness of Breath</strong>
+                    <small>Breathing difficulty</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Body & muscle aches" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">⚡</span>
+                  <div class="sym-card-text">
+                    <strong>Body &amp; Muscle Aches</strong>
+                    <small>Generalized stiffness</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Sore throat" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🗣️</span>
+                  <div class="sym-card-text">
+                    <strong>Sore Throat</strong>
+                    <small>Pain when swallowing</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Loss of appetite" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🍽️</span>
+                  <div class="sym-card-text">
+                    <strong>Loss of Appetite</strong>
+                    <small>Inability to eat</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Diarrhea / Digestive issues" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🚽</span>
+                  <div class="sym-card-text">
+                    <strong>Digestive Issues</strong>
+                    <small>Diarrhea or indigestion</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Heart racing / Palpitations" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">💓</span>
+                  <div class="sym-card-text">
+                    <strong>Palpitations</strong>
+                    <small>Pounding or fast heartbeat</small>
+                  </div>
+                </label>
+                <label class="symptom-checkbox-card">
+                  <input type="checkbox" value="Skin rash / Itching" onchange="toggleSymptomCard(this)">
+                  <span class="sym-card-icon">🔴</span>
+                  <div class="sym-card-text">
+                    <strong>Skin Rash / Itch</strong>
+                    <small>Irritation or hives</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Step 4: Triggers & Context -->
+            <div class="symptom-step">
+              <div class="symptom-step-title">
+                <span class="symptom-step-num">5</span>
+                <label for="sym-notes">Additional Context &amp; Triggers <span style="font-weight:400;color:var(--text-muted);font-size:12px">(Optional)</span></label>
+              </div>
+              <p class="symptom-step-sub">What makes it worse/better? Any medications taken or recent illnesses?</p>
+              <textarea
+                id="sym-notes"
+                class="symptom-textarea"
+                placeholder="e.g. Pain worsens after walking up stairs; took 400mg ibuprofen with slight relief; missed blood pressure medicine yesterday..."
+                rows="3"
+              ></textarea>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="symptom-submit-bar">
+              <button type="submit" class="btn-primary btn-assess-cta" id="btn-assess-symptoms">
+                <span>🩺 Analyze Symptoms with Medical AI</span>
+                <span class="btn-arrow">→</span>
+              </button>
+              <div class="symptom-submit-hint">
+                <span>⚡ Integrates clinical rules + uploaded laboratory diagnostics</span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Assessment Result Card -->
+        <div id="symptom-result-card" class="card symptom-result-card" style="display:none">
+          <div class="symptom-result-header">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:26px">🩺</span>
+              <div>
+                <h2 style="margin:0;font-size:17px">Clinical AI Assessment Report</h2>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:2px">Generated based on reported symptoms &amp; on-file medical documents</div>
+              </div>
+            </div>
+            <span id="assessment-urgency-badge" class="badge-pill"></span>
+          </div>
+
+          <div id="assessment-problem-box" class="symptom-problem-callout">
+            <div class="problem-eyebrow">Probable Underlying Problem Identified:</div>
+            <div id="assessment-probable-problem" class="problem-headline"></div>
+          </div>
+
+          <div class="symptom-explanation-box">
+            <h4 style="color:var(--primary);margin-bottom:8px;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px">
+              <span>🔍</span> Clinical Rationale &amp; Biomarker Correlation
+            </h4>
+            <p id="assessment-explanation" style="font-size:13.5px;line-height:1.65;color:var(--text)"></p>
+          </div>
+
+          <div class="assessment-split-grid">
+            <div class="symptom-alert-panel panel-red-flags">
+              <h4>
+                <span>🚨</span> Red Flag Warning Signs
+              </h4>
+              <p class="panel-sub">Seek immediate urgent medical evaluation if you develop:</p>
+              <ul id="assessment-red-flags" class="symptom-bullet-list"></ul>
+            </div>
+            <div class="symptom-alert-panel panel-actions">
+              <h4>
+                <span>📋</span> Recommended Action Plan
+              </h4>
+              <p class="panel-sub">Evidence-based clinical recommendations:</p>
+              <ul id="assessment-actions" class="symptom-bullet-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Past Symptom Assessments -->
+        <div class="card" style="margin-top:20px">
+          <h2>🕒 Previous Symptom Assessments</h2>
+          <div id="symptoms-history-list">
+            <p style="color:var(--text-muted);font-size:13px">No previous assessments.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======== PAGE: Q&A ASSISTANT ======== -->
+      <div id="page-qa" class="page">
+        <div class="page-title">💬 Q&amp;A Assistant</div>
+
+        <div class="card" style="margin-bottom:12px">
+          <p style="font-size:13px;color:var(--text-muted)">
+            Ask any question about your uploaded medical records. The AI answers strictly from your data — it will not guess or invent information.
+          </p>
+        </div>
+
+        <div class="chat-container">
+          <div id="chat-messages" class="chat-messages">
+            <div class="empty-state chat-empty-state">
+              <div class="chat-doctor-welcome-avatar">
+                <svg class="role-logo-svg doctor-logo" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Doctor AI">
+                  <circle cx="18" cy="18" r="17" fill="#0284c7" stroke="#38bdf8" stroke-width="1"/>
+                  <circle cx="18" cy="11" r="4.5" fill="#ffffff"/>
+                  <path d="M13.5 10c.8-2 2.5-3.2 4.5-3.2s3.7 1.2 4.5 3.2" stroke="#0369a1" stroke-width="1.2" stroke-linecap="round"/>
+                  <path d="M9.5 28.5c0-4.5 3.8-7.5 8.5-7.5s8.5 3 8.5 7.5v1.5h-17v-1.5z" fill="#f8fafc"/>
+                  <path d="M16 21l2 3.5 2-3.5" fill="#0284c7"/>
+                  <path d="M14.2 16v4.5a3.8 3.8 0 0 0 7.6 0V16" stroke="#0f172a" stroke-width="1.6" stroke-linecap="round"/>
+                  <circle cx="18" cy="23.2" r="1.3" fill="#0f172a"/>
+                  <rect x="22.5" y="21" width="5" height="5" rx="1" fill="#ef4444"/>
+                  <path d="M25 22.2v2.6M23.7 23.5h2.6" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3>Consult with Doctor AI</h3>
+              <p>Ask clinical questions about your uploaded medical records, lab trends, diagnoses, or prescriptions. Doctor AI evaluates strictly from your on-file documents.</p>
+              <div class="chat-suggestion-chips">
+                <button type="button" class="chat-chip-btn" onclick="askPresetQuestion('Summarize my uploaded medical records')">📋 Summarize my records</button>
+                <button type="button" class="chat-chip-btn" onclick="askPresetQuestion('Are any of my blood test or lab results abnormal?')">🧪 Abnormal lab values?</button>
+                <button type="button" class="chat-chip-btn" onclick="askPresetQuestion('What medications are listed in my reports?')">💊 Review medications</button>
+                <button type="button" class="chat-chip-btn" onclick="askPresetQuestion('What clinical diagnoses or findings were noted?')">🩺 Recorded diagnoses?</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+            <button class="btn-secondary" style="font-size:12px;padding:5px 12px" onclick="clearQAHistory()">🗑 Clear History</button>
+          </div>
+
+          <form class="chat-input-row" onsubmit="sendQuestion(event)">
+            <textarea id="qa-input" placeholder="Type your question… (Enter to send, Shift+Enter for new line)" rows="1"></textarea>
+            <button type="submit" class="btn-accent" id="btn-ask">Send</button>
+          </form>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar (Pattern 1 from Mobile Touch Apps spec) -->
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Mobile navigation">
+      <a href="#" data-page="dashboard" class="mobile-nav-item active" onclick="showPage('dashboard');return false;">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="#" data-page="documents" class="mobile-nav-item" onclick="showPage('documents');return false;">
+        <span class="nav-icon">📂</span>
+        <span class="nav-label">Documents</span>
+      </a>
+      <a href="#" data-page="summary" class="mobile-nav-item" onclick="showPage('summary');return false;">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Summary</span>
+      </a>
+      <a href="#" data-page="symptoms" class="mobile-nav-item" onclick="showPage('symptoms');return false;">
+        <span class="nav-icon">🩺</span>
+        <span class="nav-label">Symptoms</span>
+      </a>
+      <a href="#" data-page="qa" class="mobile-nav-item" onclick="showPage('qa');return false;">
+        <span class="nav-icon">💬</span>
+        <span class="nav-label">Q&amp;A</span>
+      </a>
+    </nav>
+  </div>
+</div>
+
+<!-- Document Extraction Facts Modal -->
+<div id="doc-facts-modal" class="modal-overlay" style="display:none">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 id="modal-doc-title">Document Extraction Details</h3>
+      <button class="modal-close" onclick="closeDocFactsModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-doc-facts-content">
+      Loading...
+    </div>
+  </div>
+</div>
+
+<!-- Document Deletion Confirmation Modal -->
+<div id="doc-delete-modal" class="modal-overlay" style="display:none">
+  <div class="modal-dialog" style="max-width:480px">
+    <div class="modal-header" style="background:#fef2f2;border-bottom:1px solid #fecaca">
+      <h3 style="color:#b91c1c;display:flex;align-items:center;gap:8px">
+        <span>🗑️</span> Permission to Delete Record
+      </h3>
+      <button type="button" class="modal-close" onclick="closeDocDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:22px">
+      <p style="font-size:14px;color:var(--text);margin-bottom:12px;line-height:1.5">
+        Do you give permission to permanently delete this record?
+      </p>
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">📄</span>
+        <strong id="delete-doc-filename" style="color:var(--primary);font-size:14px;word-break:break-all">document.pdf</strong>
+      </div>
+      <div style="background:#fff1f2;border:1px solid #ffe4e6;border-radius:8px;padding:12px 14px;font-size:12.5px;color:#9f1239;margin-bottom:20px;line-height:1.5">
+        ⚠️ <strong>Notice:</strong> If you select <strong>Yes</strong>, this medical record and all its associated laboratory results, vitals, and diagnoses will be permanently erased.
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button type="button" class="btn-secondary" onclick="closeDocDeleteModal()">Cancel</button>
+        <button type="button" class="btn-danger" id="btn-confirm-delete" onclick="executeDocDelete()" style="background:#dc2626;color:#fff;border-color:#b91c1c;padding:9px 18px;font-weight:600">
+          <span>Yes, Delete Record</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Permission Modal -->
+<div id="logout-modal" class="modal-overlay" style="display:none">
+  <div class="modal-dialog" style="max-width:440px">
+    <div class="modal-header" style="background:#eff6ff;border-bottom:1px solid #bfdbfe">
+      <h3 style="color:#1d4ed8;display:flex;align-items:center;gap:8px">
+        <span>🚪</span> Permission to Log Out
+      </h3>
+      <button type="button" class="modal-close" onclick="closeLogoutModal()">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:22px">
+      <p style="font-size:14px;color:var(--text);margin-bottom:12px;line-height:1.5">
+        Do you give permission to log out of your account?
+      </p>
+      <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;color:var(--text-muted);margin-bottom:20px;line-height:1.5">
+        ℹ️ Your uploaded medical records, patient data, and summaries remain safe. You can log back in at any time.
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button type="button" class="btn-secondary" onclick="closeLogoutModal()">Cancel</button>
+        <button type="button" class="btn-primary" id="btn-confirm-logout" onclick="executeLogout()" style="background:#1d4ed8;color:#fff;padding:9px 18px;font-weight:600">
+          <span>Yes, Log Out</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Uploaded Document Viewer Modal -->
+<div id="doc-view-modal" class="modal-overlay" style="display:none">
+  <div class="modal-dialog" style="max-width:920px;width:95%;height:88vh;display:flex;flex-direction:column">
+    <div class="modal-header" style="background:var(--surface-2);border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        <span style="font-size:24px">📄</span>
+        <div style="min-width:0">
+          <h3 id="modal-view-doc-title" style="margin:0;font-size:15px;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+            Document Viewer
+          </h3>
+          <div id="modal-view-doc-meta" style="font-size:11.5px;color:var(--text-muted);margin-top:2px"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <a id="modal-view-download-btn" href="#" target="_blank" download class="btn-secondary" style="font-size:12px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+          <span>⬇️ Download</span>
+        </a>
+        <button type="button" class="modal-close" onclick="closeDocViewModal()">&times;</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modal-doc-view-content" style="flex:1;padding:0;overflow:hidden;background:#f8fafc;display:flex;flex-direction:column">
+      <div class="loading-overlay"><span class="loader loader-dark"></span> Loading document preview…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Account Holder Details Modal -->
+<div id="account-details-modal" class="modal-overlay" style="display:none">
+  <div class="modal-dialog" style="max-width:520px">
+    <div class="modal-header" style="background:linear-gradient(135deg, #0e2439 0%, #163e63 100%);color:#fff">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="user-avatar" id="modal-account-avatar" style="width:40px;height:40px;font-size:16px;background:#0284c7;border:2px solid #bae6fd;box-shadow:0 2px 8px rgba(0,0,0,0.2)">U</div>
+        <div>
+          <h3 style="margin:0;font-size:15px;color:#fff">Account Holder Profile</h3>
+          <span style="font-size:11.5px;color:#93c5fd">Active Verified Patient Session</span>
+        </div>
+      </div>
+      <button type="button" class="modal-close" onclick="closeAccountDetailsModal()" style="color:#fff">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-account-body" style="padding:20px">
+      <!-- Loaded dynamically via showAccountDetailsModal() -->
+      <div class="loading-overlay"><span class="loader loader-dark"></span> Loading account information…</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js?v=4.5"></script>
+</body>
+</html>
